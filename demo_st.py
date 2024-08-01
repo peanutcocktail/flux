@@ -18,6 +18,9 @@ from flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from flux.util import (configs, embed_watermark, load_ae, load_clip,
                        load_flow_model, load_t5)
 
+import devicetorch
+DEVICE = devicetorch.get(torch)
+
 NSFW_THRESHOLD = 0.85
 
 @st.cache_resource()
@@ -52,6 +55,7 @@ def main(
     offload: bool = False,
     output_dir: str = "output",
 ):
+    device = DEVICE
     torch_device = torch.device(device)
     names = list(configs.keys())
     name = st.selectbox("Which model to load?", names)
@@ -173,7 +177,8 @@ def main(
             init_image = ae.encode(init_image.to())
             if offload:
                 ae = ae.cpu()
-                torch.cuda.empty_cache()
+                devicetorch.empty_cache(torch)
+                #torch.cuda.empty_cache()
 
         # prepare input
         x = get_noise(
@@ -203,7 +208,8 @@ def main(
         # offload TEs to CPU, load model to gpu
         if offload:
             t5, clip = t5.cpu(), clip.cpu()
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
+            devicetorch.empty_cache(torch)
             model = model.to(torch_device)
 
         # denoise initial noise
@@ -212,7 +218,8 @@ def main(
         # offload model, load autoencoder to gpu
         if offload:
             model.cpu()
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
+            devicetorch.empty_cache(torch)
             ae.decoder.to(x.device)
 
         # decode latents to pixel space
@@ -222,7 +229,8 @@ def main(
 
         if offload:
             ae.decoder.cpu()
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
+            devicetorch.empty_cache(torch)
 
         t1 = time.perf_counter()
 
