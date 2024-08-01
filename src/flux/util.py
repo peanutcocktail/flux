@@ -25,7 +25,8 @@ class ModelSpec:
 
 configs = {
     "flux-dev": ModelSpec(
-        repo_id="black-forest-labs/FLUX.1-dev",
+        #repo_id="black-forest-labs/FLUX.1-dev",
+        repo_id="cocktailpeanut/xulf-dev",
         repo_flow="flux1-dev.sft",
         repo_ae="ae.sft",
         ckpt_path=os.getenv("FLUX_DEV"),
@@ -57,7 +58,8 @@ configs = {
         ),
     ),
     "flux-schnell": ModelSpec(
-        repo_id="black-forest-labs/FLUX.1-schnell",
+        #repo_id="black-forest-labs/FLUX.1-schnell",
+        repo_id="cocktailpeanut/xulf-schnell",
         repo_flow="flux1-schnell.sft",
         repo_ae="ae.sft",
         ckpt_path=os.getenv("FLUX_SCHNELL"),
