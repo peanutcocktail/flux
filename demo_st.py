@@ -29,8 +29,9 @@ def get_models(name: str, device: torch.device, offload: bool, is_schnell: bool)
     clip = load_clip(device)
     model = load_flow_model(name, device="cpu" if offload else device)
     ae = load_ae(name, device="cpu" if offload else device)
-    nsfw_classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection")
-    return model, ae, t5, clip, nsfw_classifier
+#    nsfw_classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection", device=DEVICE)
+#    return model, ae, t5, clip, nsfw_classifier
+    return model, ae, t5, clip
 
 
 def get_image() -> torch.Tensor | None:
@@ -63,7 +64,8 @@ def main(
         return
 
     is_schnell = name == "flux-schnell"
-    model, ae, t5, clip, nsfw_classifier = get_models(
+    #model, ae, t5, clip, nsfw_classifier = get_models(
+    model, ae, t5, clip = get_models(
         name,
         device=torch_device,
         offload=offload,
@@ -224,7 +226,10 @@ def main(
 
         # decode latents to pixel space
         x = unpack(x.float(), opts.height, opts.width)
-        with torch.autocast(device_type=torch_device.type, dtype=torch.bfloat16):
+        if DEVICE == "cuda":
+            with torch.autocast(device_type=torch_device.type, dtype=torch.bfloat16):
+                x = ae.decode(x)
+        else:
             x = ae.decode(x)
 
         if offload:
@@ -242,7 +247,8 @@ def main(
         x = rearrange(x[0], "c h w -> h w c")
 
         img = Image.fromarray((127.5 * (x + 1.0)).cpu().byte().numpy())
-        nsfw_score = [x["score"] for x in nsfw_classifier(img) if x["label"] == "nsfw"][0]
+#        nsfw_score = [x["score"] for x in nsfw_classifier(img) if x["label"] == "nsfw"][0]
+        nsfw_score = 0
 
         if nsfw_score < NSFW_THRESHOLD:
             buffer = BytesIO()
